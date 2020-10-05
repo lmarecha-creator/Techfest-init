@@ -22,15 +22,20 @@ Resources:
     Properties:
       Bucket: !Ref S3Bucket
       PolicyDocument:
-        Statement:
-          - Action: 's3:GetObject'
-            Effect: Allow
-            Resource: !Sub 'arn:aws:s3:::${S3Bucket}/*'
-            Principal: '*'
-            # In an ideal scenario the policy would only grant these rights to CloudFront,
-            # we do not do it from scratch as many projects start without having a domain name specified
-            # and we want to test the code as soon as possible.
-            # Principal: CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
+         Statement": [
+        {
+            "Sid": "ListObjectsInBucket",
+            "Effect": "Allow",
+            "Action": ["s3:ListBucket"],
+            "Resource": ["arn:aws:s3:::!Ref S3Bucket"]
+        },
+        {
+            "Sid": "AllObjectActions",
+            "Effect": "Allow",
+            "Action": "s3:*Object",
+            "Resource": ["arn:aws:s3:::!Ref S3Bucket/*"]
+        }
+    ]
 
   # Configure Access to CloudFroun
   CloudFrontOriginAccessIdentity:
