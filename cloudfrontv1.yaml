@@ -1,18 +1,40 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Static website hosting with S3 and CloudFront'
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+
 Parameters:
-    BucketName: {Type: String, Default: a-proper-bucket-name}
+  BucketPrefix:
+    Type: String
+    Description: "The prefix used for all S3 buckets."
+    AllowedPattern: "[a-z-]+"
+
 Resources:
-    S3Bucket: {Type: 'AWS::S3::Bucket', Properties: {BucketName: null, WebsiteConfiguration: {ErrorDocument: index.html, IndexDocument: index.html}}}
-    ReadPolicy: {Type: 'AWS::S3::BucketPolicy', Properties: {Bucket: null, PolicyDocument: {Statement: [{Sid: ListObjectsInBucket, Effect: Allow, Action: ['s3:ListBucket'], Resource: ['arn:aws:s3:::bucket-name']}, {Sid: AllObjectActions, Effect: Allow, Action: 's3:*Object', Resource: ['arn:aws:s3:::bucket-name/*']}]}}}
-    CloudFrontOriginAccessIdentity: {Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity', Properties: {CloudFrontOriginAccessIdentityConfig: {Comment: null}}}
-    CloudFrontDistribution: {Type: 'AWS::CloudFront::Distribution', Properties: {DistributionConfig: {CustomErrorResponses: [{ErrorCode: 403, ResponseCode: 404, ResponsePagePath: /index.html}], DefaultCacheBehavior: {AllowedMethods: [GET, HEAD, OPTIONS], CachedMethods: [GET, HEAD, OPTIONS], Compress: true, DefaultTTL: 3600, ForwardedValues: {Cookies: {Forward: none}, QueryString: false}, MaxTTL: 86400, MinTTL: 60, TargetOriginId: s3origin, ViewerProtocolPolicy: allow-all}, DefaultRootObject: /index.html, Enabled: true, HttpVersion: http2, Origins: [{DomainName: null, Id: s3origin, S3OriginConfig: {OriginAccessIdentity: null}}], PriceClass: PriceClass_All}}}
-    PublishUser: {Type: 'AWS::IAM::User', Properties: {Policies: [{PolicyName: null, PolicyDocument: {Statement: [{Action: 's3:*', Effect: Allow, Resource: [null, null]}]}}]}}
-    PublishCredentials: {Type: 'AWS::IAM::AccessKey', Properties: {UserName: null}}
-Outputs:
-    Bucket: {Description: 'S3 Bucket Name', Value: null}
-    BucketUrl: {Description: 'S3 Bucket Url', Value: null}
-    AccessKeyId: {Description: 'S3 Access Key', Value: null}
-    AccessKeySecret: {Description: 'S3 Secret Key', Value: null}
-    DistributionId: {Description: 'CloudFront Distribution ID', Value: null}
-    Domain: {Description: 'Cloudfront Domain', Value: null}
+  Assets:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${BucketPrefix}-assets"
+        
+  CustomRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-CustomRole"
+      Path: /
+
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - # add your own statement here
+
+      Policies:
+        - 
+          PolicyName: !Sub "${AWS::StackName}-CustomRole"
+          PolicyDocument:
+            Statement:
+              - 
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:PutObjectTagging
+                  - s3:ListObject
+                Resource:
+                  - !Join ["", ["arn:aws:s3:::", Ref: "BucketPrefix", "-assets", "/*" ]]
