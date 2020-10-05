@@ -1,40 +1,30 @@
-AWSTemplateFormatVersion: 2010-09-09
-Transform: AWS::Serverless-2016-10-31
-
-Parameters:
-  BucketPrefix:
-    Type: String
-    Description: "The prefix used for all S3 buckets."
-    AllowedPattern: "[a-z-]+"
-
-Resources:
-  Assets:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub "${BucketPrefix}-assets"
-        
-  CustomRole:
-    Type: "AWS::IAM::Role"
-    Properties:
-      RoleName: !Sub "${AWS::StackName}-CustomRole"
-      Path: /
-
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - # add your own statement here
-
-      Policies:
-        - 
-          PolicyName: !Sub "${AWS::StackName}-CustomRole"
-          PolicyDocument:
-            Statement:
-              - 
-                Effect: Allow
-                Action:
-                  - s3:PutObject
-                  - s3:GetObject
-                  - s3:PutObjectTagging
-                  - s3:ListObject
-                Resource:
-                  - !Join ["", ["arn:aws:s3:::", Ref: "BucketPrefix", "-assets", "/*" ]]
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ConsoleAccess",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetAccountPublicAccessBlock",
+                "s3:GetBucketAcl",
+                "s3:GetBucketLocation",
+                "s3:GetBucketPolicyStatus",
+                "s3:GetBucketPublicAccessBlock",
+                "s3:ListAllMyBuckets"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ListObjectsInBucket",
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": ["arn:aws:s3:::bucket-name"]
+        },
+        {
+            "Sid": "AllObjectActions",
+            "Effect": "Allow",
+            "Action": "s3:*Object",
+            "Resource": ["arn:aws:s3:::bucket-name/*"]
+        }
+    ]
+}
