@@ -1,30 +1,42 @@
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "ConsoleAccess",
-            "Effect": "Allow",
-            "Action": [
-                "s3:GetAccountPublicAccessBlock",
-                "s3:GetBucketAcl",
-                "s3:GetBucketLocation",
-                "s3:GetBucketPolicyStatus",
-                "s3:GetBucketPublicAccessBlock",
-                "s3:ListAllMyBuckets"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "ListObjectsInBucket",
-            "Effect": "Allow",
-            "Action": "s3:ListBucket",
-            "Resource": ["arn:aws:s3:::bucket-name"]
-        },
-        {
-            "Sid": "AllObjectActions",
-            "Effect": "Allow",
-            "Action": "s3:*Object",
-            "Resource": ["arn:aws:s3:::bucket-name/*"]
-        }
-    ]
-}
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create an S3 bucket and IAM user with access to that bucket.
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  S3User:
+    Type: AWS::IAM::User
+    Properties:
+      Policies:
+        - PolicyName: bucket-access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - s3:*
+              Resource:
+                - !Sub arn:aws:s3:::${S3Bucket}
+                - !Sub arn:aws:s3:::${S3Bucket}/*
+
+  S3UserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref S3User
+
+Outputs:
+  AccessKeyID:
+    Value: !Ref S3UserAccessKey
+  SecretAccessKey:
+    Value: !GetAtt S3UserAccessKey.SecretAccessKey
+  BucketName:
+    Value: !Ref S3Bucket
+  User:
+    Value: !Ref S3User
